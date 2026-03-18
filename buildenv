@@ -1,15 +1,49 @@
-#!/bin/sh
-#
-# Build environment for xk6port - z/OS port of the xk6 custom k6 builder
-#
-
 export ZOPEN_BUILD_LINE="STABLE"
-export ZOPEN_STABLE_URL="https://github.com/grafana/xk6/archive/refs/tags/v1.3.6.tar.gz"
-export ZOPEN_STABLE_DEPS="go_1258"
-export ZOPEN_DEV_URL="https://github.com/grafana/xk6.git"
-export ZOPEN_DEV_DEPS="go_1258"
+export ZOPEN_STABLE_URL="https://github.com/grafana/xk6.git"
+export ZOPEN_STABLE_TAG="v1.3.6"
+export ZOPEN_STABLE_DEPS="check_go git"
+export ZOPEN_CATEGORIES="development"
 export ZOPEN_COMP=GO
 export ZOPEN_NAME="xk6"
+
+export ZOPEN_CONFIGURE="zopen_configure"
+export ZOPEN_CONFIGURE_MINIMAL=1
+export ZOPEN_MAKE="go"
+export ZOPEN_MAKE_OPTS="build ./cmd/xk6"
+export ZOPEN_MAKE_MINIMAL=1
+export ZOPEN_INSTALL="zopen_install"
+export ZOPEN_CHECK="zopen_check"
+export ZOPEN_CLEAN="zopen_clean"
+
+zopen_init()
+{
+  export GOBIN=$ZOPEN_INSTALL_DIR/bin
+  mkdir -p $ZOPEN_INSTALL_DIR/bin
+  unset CC CXX
+  export CGO_ENABLED=0
+  export GOOS=zos
+  export GOARCH=s390x
+  export GOTOOLCHAIN=local
+}
+
+zopen_configure()
+{
+  echo "Tagging source files with UTF-8 encoding..."
+  find . -name "*.go" -exec chtag -tc 1208 {} \;
+  find . -name "go.mod" -exec chtag -tc 1208 {} \;
+  find . -name "go.sum" -exec chtag -tc 1208 {} \;
+}
+
+zopen_install()
+{
+  go install ./cmd/xk6
+}
+
+zopen_check()
+{
+  echo "Running xk6 verification..."
+  "$ZOPEN_INSTALL_DIR/bin/xk6" version
+}
 
 zopen_check_results()
 {
@@ -17,52 +51,25 @@ zopen_check_results()
   pfx="$2"
   chk="$1/$2_check.log"
 
-  echo "actualFailures:0"
-  echo "totalTests:1"
-  echo "expectedFailures:0"
+  if grep -q "xk6" "$chk" 2>/dev/null; then
+    echo "actualFailures:0"
+    echo "totalTests:1"
+    echo "expectedFailures:0"
+    echo "expectedTotalTests:1"
+  else
+    echo "actualFailures:1"
+    echo "totalTests:1"
+    echo "expectedFailures:0"
+    echo "expectedTotalTests:1"
+  fi
 }
 
 zopen_get_version()
 {
-  echo "v1.3.6"
-}
-
-zopen_pre_build()
-{
-  export CGO_ENABLED=0
-  export GOOS=zos
-  export GOARCH=s390x
-  export GOFLAGS="-mod=mod"
-}
-
-zopen_build()
-{
-  go build -o xk6 ./cmd/xk6
-}
-
-zopen_check()
-{
-  "$ZOPEN_INSTALL_DIR/bin/xk6" version
-}
-
-zopen_install()
-{
-  mkdir -p "$ZOPEN_INSTALL_DIR/bin"
-  cp xk6 "$ZOPEN_INSTALL_DIR/bin/"
+  echo "1.3.6"
 }
 
 zopen_clean()
 {
   rm -f xk6
-}
-
-zopen_append_to_env()
-{
-  # Run zopen-generate-envars to create the .env file
-  :
-}
-
-zopen_append_to_zoslib_env()
-{
-  :
 }
