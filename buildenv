@@ -32,6 +32,10 @@ zopen_configure()
   find . -name "*.go" -exec chtag -tc 1208 {} \;
   find . -name "go.mod" -exec chtag -tc 1208 {} \;
   find . -name "go.sum" -exec chtag -tc 1208 {} \;
+
+  echo "Relaxing go toolchain requirement for z/OS..."
+  go mod edit -go 1.25.7
+  chtag -tc 1208 go.mod
 }
 
 zopen_install()
