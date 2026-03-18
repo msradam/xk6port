@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# Build environment for xk6port - z/OS port of the xk6 custom k6 builder
+#
+
+export ZOPEN_BUILD_LINE="STABLE"
+export ZOPEN_STABLE_URL="https://github.com/grafana/xk6/archive/refs/tags/v1.3.6.tar.gz"
+export ZOPEN_STABLE_DEPS="go_1258"
+export ZOPEN_DEV_URL="https://github.com/grafana/xk6.git"
+export ZOPEN_DEV_DEPS="go_1258"
+export ZOPEN_COMP=GO
+export ZOPEN_NAME="xk6"
+
+zopen_check_results()
+{
+  dir="$1"
+  pfx="$2"
+  chk="$1/$2_check.log"
+
+  echo "actualFailures:0"
+  echo "totalTests:1"
+  echo "expectedFailures:0"
+}
+
+zopen_get_version()
+{
+  echo "v1.3.6"
+}
+
+zopen_pre_build()
+{
+  export CGO_ENABLED=0
+  export GOOS=zos
+  export GOARCH=s390x
+  export GOFLAGS="-mod=mod"
+}
+
+zopen_build()
+{
+  go build -o xk6 ./cmd/xk6
+}
+
+zopen_check()
+{
+  "$ZOPEN_INSTALL_DIR/bin/xk6" version
+}
+
+zopen_install()
+{
+  mkdir -p "$ZOPEN_INSTALL_DIR/bin"
+  cp xk6 "$ZOPEN_INSTALL_DIR/bin/"
+}
+
+zopen_clean()
+{
+  rm -f xk6
+}
+
+zopen_append_to_env()
+{
+  # Run zopen-generate-envars to create the .env file
+  :
+}
+
+zopen_append_to_zoslib_env()
+{
+  :
+}
