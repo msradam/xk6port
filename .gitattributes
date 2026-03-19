@@ -1,0 +1,5 @@
+# Ensure text files are written as UTF-8 with LF on all platforms
+* text=auto eol=lf
+buildenv text eol=lf
+*.groovy text eol=lf
+*.md text eol=lf
