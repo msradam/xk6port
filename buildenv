@@ -51,7 +51,7 @@ zopen_configure()
   # Modeled on worktree_linux.go — z/OS syscall.Stat_t has the same Ctim layout.
   if [ -d "vendor/github.com/go-git/go-git/v5" ]; then
     echo "Creating go-git worktree_zos.go stub..."
-    cat > vendor/github.com/go-git/go-git/v5/worktree_zos.go << 'STUBEOF'
+    cat << 'STUBEOF' | iconv -f IBM-1047 -t UTF-8 > vendor/github.com/go-git/go-git/v5/worktree_zos.go
 //go:build zos
 // +build zos
 
