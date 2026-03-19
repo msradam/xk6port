@@ -1,7 +1,7 @@
 export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_STABLE_URL="https://github.com/grafana/xk6.git"
 export ZOPEN_STABLE_TAG="v1.3.6"
-export ZOPEN_STABLE_DEPS="check_go git"
+export ZOPEN_STABLE_DEPS="check_go git wharf"
 export ZOPEN_CATEGORIES="development"
 export ZOPEN_COMP=GO
 export ZOPEN_NAME="xk6"
@@ -19,6 +19,7 @@ zopen_init()
 {
   export GOBIN=$ZOPEN_INSTALL_DIR/bin
   mkdir -p $ZOPEN_INSTALL_DIR/bin
+  export PATH=$PATH:$GOROOT/go-build-zos/bin
   unset CC CXX
   export CGO_ENABLED=0
   export GOOS=zos
@@ -28,60 +29,15 @@ zopen_init()
 
 zopen_configure()
 {
-  echo "Tagging source files with UTF-8 encoding..."
-  find . -name "*.go" -exec chtag -tc 1208 {} \;
-  find . -name "go.mod" -exec chtag -tc 1208 {} \;
-  find . -name "go.sum" -exec chtag -tc 1208 {} \;
-
   echo "Relaxing go toolchain requirement for z/OS..."
   go mod edit -go 1.25.7
-  chtag -tc 1208 go.mod
 
-  echo "Vendoring dependencies..."
-  go mod vendor
-
-  echo "Tagging vendored source files with UTF-8 encoding..."
-  find vendor -name "*.go" -exec chtag -tc 1208 {} \;
-  find vendor -name "go.mod" -exec chtag -tc 1208 {} \;
-  find vendor -name "go.sum" -exec chtag -tc 1208 {} \;
-
-  # go-git/go-git/v5: worktree.go calls isSymlinkWindowsNonAdmin() and uses
-  # fillSystemInfo, both defined in OS-specific files (worktree_linux.go,
-  # worktree_bsd.go, etc). No z/OS variant exists upstream, so we stub one.
-  # Modeled on worktree_linux.go — z/OS syscall.Stat_t has the same Ctim layout.
-  if [ -d "vendor/github.com/go-git/go-git/v5" ]; then
-    echo "Creating go-git worktree_zos.go stub..."
-    cat << 'STUBEOF' | iconv -f IBM-1047 -t UTF-8 > vendor/github.com/go-git/go-git/v5/worktree_zos.go
-//go:build zos
-// +build zos
-
-package git
-
-import (
-	"syscall"
-	"time"
-
-	"github.com/go-git/go-git/v5/plumbing/format/index"
-)
-
-func init() {
-	fillSystemInfo = func(e *index.Entry, sys interface{}) {
-		if os, ok := sys.(*syscall.Stat_t); ok {
-			e.CreatedAt = time.Unix(os.Ctim.Unix())
-			e.Dev = uint32(os.Dev)
-			e.Inode = uint32(os.Ino)
-			e.GID = os.Gid
-			e.UID = os.Uid
-		}
-	}
-}
-
-func isSymlinkWindowsNonAdmin(_ error) bool {
-	return false
-}
-STUBEOF
-    chtag -tc 1208 vendor/github.com/go-git/go-git/v5/worktree_zos.go
-  fi
+  echo "Running wharf to patch for z/OS..."
+  cd ..
+  go work init
+  go work use ./xk6
+  wharf ./xk6
+  cd ./xk6
 }
 
 zopen_install()
