@@ -1,7 +1,7 @@
 export ZOPEN_BUILD_LINE="STABLE"
 export ZOPEN_STABLE_URL="https://github.com/grafana/xk6.git"
-export ZOPEN_STABLE_TAG="v1.3.6"
-export ZOPEN_STABLE_DEPS="check_go git wharf"
+export ZOPEN_STABLE_TAG="v1.3.7"
+export ZOPEN_STABLE_DEPS="check_go git"
 export ZOPEN_CATEGORIES="development"
 export ZOPEN_COMP=GO
 export ZOPEN_NAME="xk6"
@@ -19,7 +19,6 @@ zopen_init()
 {
   export GOBIN=$ZOPEN_INSTALL_DIR/bin
   mkdir -p $ZOPEN_INSTALL_DIR/bin
-  export PATH=$PATH:$GOROOT/go-build-zos/bin
   unset CC CXX
   export CGO_ENABLED=0
   export GOOS=zos
@@ -29,15 +28,10 @@ zopen_init()
 
 zopen_configure()
 {
-  echo "Relaxing go toolchain requirement for z/OS..."
-  go mod edit -go 1.25.7
-
-  echo "Running wharf to patch for z/OS..."
-  cd ..
-  go work init
-  go work use ./xk6
-  wharf ./xk6
-  cd ./xk6
+  echo "Tagging source files with UTF-8 encoding..."
+  find . -name "*.go" -exec chtag -tc 1208 {} \;
+  find . -name "go.mod" -exec chtag -tc 1208 {} \;
+  find . -name "go.sum" -exec chtag -tc 1208 {} \;
 }
 
 zopen_install()
@@ -72,7 +66,7 @@ zopen_check_results()
 
 zopen_get_version()
 {
-  echo "1.3.6"
+  echo "1.3.7"
 }
 
 zopen_clean()

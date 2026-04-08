@@ -3,3 +3,4 @@
 buildenv text eol=lf
 *.groovy text eol=lf
 *.md text eol=lf
+*.yml text eol=lf
