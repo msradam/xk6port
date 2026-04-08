@@ -2,7 +2,7 @@ diff --git a/vendor/github.com/go-git/go-git/v5/worktree_zos.go b/vendor/github.
 new file mode 100644
 --- /dev/null
 +++ b/vendor/github.com/go-git/go-git/v5/worktree_zos.go
-@@ -0,0 +1,26 @@
+@@ -0,0 +1,27 @@
 +//go:build zos
 +// +build zos
 +
